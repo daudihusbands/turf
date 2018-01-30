@@ -2,6 +2,9 @@ var helpers = require('@turf/helpers');
 var lineSplit = require('@turf/line-split');
 var getCoords = require('@turf/invariant').getCoords;
 var featureEach = require('@turf/meta').featureEach;
+var flatten = require('@turf/flatten');
+var truncate = require('@turf/truncate');
+var polygonize = require('@turf/polygonize');
 var featureCollection = helpers.featureCollection;
 var lineString = helpers.lineString;
 
@@ -40,6 +43,20 @@ var lineString = helpers.lineString;
  * //=sliced
 */
 module.exports = function polygonSlice(poly, splitter) {
+    // Handle multi-polygons by recursing into them.
+    if (poly.geometry.type === 'MultiPolygon') {
+        var innerResults = [];
+        var polygons = flatten(poly);
+        featureEach(polygons, (polygon) => {
+            var sliced = polygonSlice(polygon, splitter);
+            featureEach(sliced, (feature) => {
+                innerResults.push(feature);
+            });
+        });
+        var out = featureCollection(innerResults);
+        return out;
+    }
+    // Handle the single feature case
     var results = [];
     var coords = getCoords(poly);
     var outer = lineString(coords[0]);
@@ -62,7 +79,12 @@ module.exports = function polygonSlice(poly, splitter) {
         results.push(line);
     });
 
-    return featureCollection(results);
+    // Snap features to a guide
+    results.forEach((feature) => {
+        truncate(feature, 6, 3, true);
+    });
+
+    return polygonize(featureCollection(results));
 };
 
 /**
