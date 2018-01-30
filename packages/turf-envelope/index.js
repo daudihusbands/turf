@@ -1,58 +1,26 @@
-var bbox = require('@turf/bbox');
-var bboxPolygon = require('@turf/bbox-polygon');
+import bbox from '@turf/bbox';
+import bboxPolygon from '@turf/bbox-polygon';
 
 /**
  * Takes any number of features and returns a rectangular {@link Polygon} that encompasses all vertices.
  *
  * @name envelope
- * @param {(Feature|FeatureCollection)} features input features
- * @return {Feature<Polygon>} a rectangular Polygon feature that encompasses all vertices
+ * @param {GeoJSON} geojson input features
+ * @returns {Feature<Polygon>} a rectangular Polygon feature that encompasses all vertices
  * @example
- * var fc = {
- *   "type": "FeatureCollection",
- *   "features": [
- *     {
- *       "type": "Feature",
- *       "properties": {
- *         "name": "Location A"
- *       },
- *       "geometry": {
- *         "type": "Point",
- *         "coordinates": [-75.343, 39.984]
- *       }
- *     }, {
- *       "type": "Feature",
- *       "properties": {
- *         "name": "Location B"
- *       },
- *       "geometry": {
- *         "type": "Point",
- *         "coordinates": [-75.833, 39.284]
- *       }
- *     }, {
- *       "type": "Feature",
- *       "properties": {
- *         "name": "Location C"
- *       },
- *       "geometry": {
- *         "type": "Point",
- *         "coordinates": [-75.534, 39.123]
- *       }
- *     }
- *   ]
- * };
+ * var features = turf.featureCollection([
+ *   turf.point([-75.343, 39.984], {"name": "Location A"}),
+ *   turf.point([-75.833, 39.284], {"name": "Location B"}),
+ *   turf.point([-75.534, 39.123], {"name": "Location C"})
+ * ]);
  *
- * var enveloped = turf.envelope(fc);
+ * var enveloped = turf.envelope(features);
  *
- * var resultFeatures = fc.features.concat(enveloped);
- * var result = {
- *   "type": "FeatureCollection",
- *   "features": resultFeatures
- * };
- *
- * //=result
+ * //addToMap
+ * var addToMap = [features, enveloped];
  */
+function envelope(geojson) {
+    return bboxPolygon(bbox(geojson));
+}
 
-module.exports = function (features) {
-    return bboxPolygon(bbox(features));
-};
+export default envelope;

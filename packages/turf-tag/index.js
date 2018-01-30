@@ -1,4 +1,6 @@
-var inside = require('@turf/inside');
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import clone from '@turf/clone';
+import { featureEach } from '@turf/meta';
 
 /**
  * Takes a set of {@link Point|points} and a set of {@link Polygon|polygons} and performs a spatial join.
@@ -8,7 +10,7 @@ var inside = require('@turf/inside');
  * @param {FeatureCollection<Polygon>} polygons input polygons
  * @param {string} field property in `polygons` to add to joined {<Point>} features
  * @param {string} outField property in `points` in which to store joined property from `polygons`
- * @return {FeatureCollection<Point>} points with `containingPolyId` property containing values from `polyId`
+ * @returns {FeatureCollection<Point>} points with `containingPolyId` property containing values from `polyId`
  * @example
  * var pt1 = turf.point([-77, 44]);
  * var pt2 = turf.point([-77, 38]);
@@ -30,27 +32,24 @@ var inside = require('@turf/inside');
  * var points = turf.featureCollection([pt1, pt2]);
  * var polygons = turf.featureCollection([poly1, poly2]);
  *
- * var tagged = turf.tag(points, polygons,
- *                       'pop', 'population');
+ * var tagged = turf.tag(points, polygons, 'pop', 'population');
  *
- * //=tagged
+ * //addToMap
+ * var addToMap = [tagged, polygons]
  */
-module.exports = function (points, polygons, field, outField) {
+function tag(points, polygons, field, outField) {
     // prevent mutations
-    points = JSON.parse(JSON.stringify(points));
-    polygons = JSON.parse(JSON.stringify(polygons));
-    points.features.forEach(function (pt) {
-        if (!pt.properties) {
-            pt.properties = {};
-        }
-        polygons.features.forEach(function (poly) {
+    points = clone(points);
+    polygons = clone(polygons);
+    featureEach(points, function (pt) {
+        if (!pt.properties) pt.properties = {};
+        featureEach(polygons, function (poly) {
             if (pt.properties[outField] === undefined) {
-                var isInside = inside(pt, poly);
-                if (isInside) {
-                    pt.properties[outField] = poly.properties[field];
-                }
+                if (booleanPointInPolygon(pt, poly)) pt.properties[outField] = poly.properties[field];
             }
         });
     });
     return points;
-};
+}
+
+export default tag;

@@ -1,27 +1,50 @@
-var test = require('tape');
-var distance = require('./');
+import fs from 'fs';
+import path from 'path';
+import test from 'tape';
+import load from 'load-json-file';
+import write from 'write-json-file';
+import { point } from '@turf/helpers';
+import distance from '.';
 
-test('distance', function(t){
-  var pt1 = {
-    type: "Feature",
-    geometry: {type: "Point", coordinates: [-75.343, 39.984]}
-  };
-  var pt2 = {
-    type: "Feature",
-    geometry: {type: "Point", coordinates: [-75.534, 39.123]}
-  };
+const directories = {
+    in: path.join(__dirname, 'test', 'in') + path.sep,
+    out: path.join(__dirname, 'test', 'out') + path.sep
+};
 
-  t.equal(distance(pt1, pt2, 'miles'), 60.37218405837491, 'miles');
-  t.equal(distance(pt1, pt2, 'nauticalmiles'), 52.461979624130436, 'miles');
-  t.equal(distance(pt1, pt2, 'kilometers'), 97.15957803131901, 'kilometers');
-  t.equal(distance(pt1, pt2, 'kilometres'), 97.15957803131901, 'kilometres');
-  t.equal(distance(pt1, pt2, 'radians'), 0.015245501024842149, 'radians');
-  t.equal(distance(pt1, pt2, 'degrees'), 0.8735028650863799, 'degrees');
-  t.equal(distance(pt1, pt2), 97.15957803131901, 'default=kilometers');
+const fixtures = fs.readdirSync(directories.in).map(filename => {
+    return {
+        filename,
+        name: path.parse(filename).name,
+        geojson: load.sync(directories.in + filename)
+    };
+});
 
-  t.throws(function() {
-      distance(pt1, pt2, 'blah');
-  }, 'unknown option given to units');
+test('distance', t => {
+    fixtures.forEach(fixture => {
+        const name = fixture.name;
+        const geojson = fixture.geojson;
+        const pt1 = geojson.features[0];
+        const pt2 = geojson.features[1];
+        const distances = {
+            miles: distance(pt1, pt2, {units: 'miles'}),
+            nauticalmiles: distance(pt1, pt2, {units: 'nauticalmiles'}),
+            kilometers: distance(pt1, pt2, {units: 'kilometers'}),
+            radians: distance(pt1, pt2, {units: 'radians'}),
+            degrees: distance(pt1, pt2, {units: 'degrees'})
+        };
+        if (process.env.REGEN) write.sync(directories.out + name + '.json', distances);
+        t.deepEqual(distances, load.sync(directories.out + name + '.json'), name);
+    });
+    t.end();
+});
 
-  t.end();
+// https://github.com/Turfjs/turf/issues/758
+test('distance -- Issue #758', t => {
+    t.equal(Math.round(distance(point([-180, -90]), point([180, -90]))), 0, 'should be 0');
+    t.end();
+});
+
+test('distance -- throws', t => {
+    t.throws(() => distance(point([0, 0]), point([10, 10]), {units: 'foo'}), /units is invalid/);
+    t.end();
 });

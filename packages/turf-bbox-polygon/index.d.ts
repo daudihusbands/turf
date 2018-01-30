@@ -1,11 +1,12 @@
-/// <reference types="geojson" />
-
-type Polygon = GeoJSON.Feature<GeoJSON.Polygon>;
-type BBox = Array<number>;
+import { BBox, Feature, Polygon, Properties, Id } from '@turf/helpers';
 
 /**
  * http://turfjs.org/docs/#bboxpolygon
  */
-declare function bboxPolygon(bbox: BBox): Polygon;
-declare namespace bboxPolygon { }
-export = bboxPolygon;
+export default function bboxPolygon<P = Properties>(
+    bbox: BBox,
+    options?: {
+        properties?: P,
+        id?: Id
+    }
+): Feature<Polygon, P>;

@@ -1,10 +1,11 @@
-![turf](https://raw.githubusercontent.com/Turfjs/turf/9a1d5e8d99564d4080f1e2bf1517ed41d18012fa/logo.png) 
+![turf](https://raw.githubusercontent.com/Turfjs/turf/9a1d5e8d99564d4080f1e2bf1517ed41d18012fa/logo.png)
 ======
 
 [![Version Badge][npm-img]][npm-url]
-[![Circle CI](https://circleci.com/gh/Turfjs/turf.svg?style=svg)](https://circleci.com/gh/Turfjs/turf)
 [![Travis CI](https://travis-ci.org/Turfjs/turf.svg?branch=master)](https://travis-ci.org/Turfjs/turf)
 [![Gitter chat][gitter-img]][gitter-url]
+[![Coverage Status](https://coveralls.io/repos/github/Turfjs/turf/badge.svg)](https://coveralls.io/github/Turfjs/turf)
+[![Greenkeeper badge](https://badges.greenkeeper.io/Turfjs/turf.svg)](https://greenkeeper.io/)
 
 [npm-img]: https://img.shields.io/npm/v/@turf/turf.svg
 [npm-url]: https://www.npmjs.com/package/@turf/turf
@@ -21,13 +22,13 @@
 
 ## Installation
 
-**In Node.js:**
+### In Node.js
 
 ```bash
 npm install @turf/turf
 ```
 
-**In browser:**
+### In browser
 
 Download the [minified file](https://npmcdn.com/@turf/turf/turf.min.js), and include it in a script tag. This will expose a global variable named `turf`.
 
@@ -35,33 +36,41 @@ Download the [minified file](https://npmcdn.com/@turf/turf/turf.min.js), and inc
 <script src="turf.min.js" charset="utf-8"></script>
 ```
 
+You can also include it directly from a CDN:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@5/turf.min.js"></script>
+```
+
 You can create light-weight turf builds with only the functions you need using the [turfjs-builder UI](https://turfjs-builder.herokuapp.com/) or using browserify as described below.
 
-**Browserify:**
+### Browserify
 
 All of Turf's functions can also be installed as separate modules. This works well with tools like [browserify](http://browserify.org/) where you want to install only the code you need. It also allows you to mix and match modules. This is the recommended usage pattern for most production environments. For example, to install the *point* and *buffer* modules use:
 
 ```sh
-npm install @turf/point @turf/buffer
+npm install @turf/helpers @turf/buffer
 ```
 
-**Bower [NOTE: Bower support will be dropped Jan 1st 2017]:**
+### Bower [NOTE: Bower support has been dropped Jan 1st 2017]
 
-_Not recommend. Please don't use Bower. Use Browserify, Webpack, or the CDN instead._
+_Not recommended. Please don't use Bower. Use Browserify, Webpack, or the CDN instead._
 
-The latest Bower build is at:
-
-```
-https://unpkg.com/@turf/turf@3.1.1/bower.zip
-```
-
-**TypeScript**
+### TypeScript
 
 TypeScript is supported internally within each module, no installs required.
 
+### Other languages
+
+Ports of Turf.js are available in:
+
+- [Java](https://github.com/mapbox/mapbox-java/blob/master/docs/turf-port.md) (Android, Java SE)
+- [Swift](https://github.com/mapbox/turf-swift/) (iOS, macOS, tvOS, watchOS, Linux)
+> Turf for Swift is **experimental** and its public API is subject to change. Please use with care.
+
 - - -
 
-### Data in Turf
+## Data in Turf
 
 Turf uses <a href='http://geojson.org/'>GeoJSON</a> for all geographic data. Turf expects the data to be standard <a href='http://en.wikipedia.org/wiki/World_Geodetic_System'>WGS84</a> longitude, latitude coordinates. Check out <a href='http://geojson.io/#id=gist:anonymous/844f013aae8354eb889c&map=12/38.8955/-77.0135'>geojson.io</a> for a tool to easily create this data.
 

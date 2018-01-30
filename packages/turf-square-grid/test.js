@@ -1,49 +1,66 @@
-var test = require('tape');
-var grid = require('./');
-var fs = require('fs');
+import fs from 'fs';
+import test from 'tape';
+import path from 'path';
+import load from 'load-json-file';
+import write from 'write-json-file';
+import bboxPoly from '@turf/bbox-polygon';
+import truncate from '@turf/truncate';
+import squareGrid from '.';
 
-test('square-grid', function (t) {
-  var bbox1 = [
-        -96.6357421875,
-        31.12819929911196,
-        -84.9462890625,
-        40.58058466412764
-      ];
-  var bbox2 = [
-          -81.650390625,
-          24.926294766395593,
-          -79.8486328125,
-          26.43122806450644
-        ];
-  var bbox3 = [
-        -77.3876953125,
-        38.71980474264239,
-        -76.9482421875,
-        39.027718840211605
-      ];
-  var bbox4 = [
-    63.6328125,
-    11.867350911459308,
-    75.234375,
-    47.754097979680026
-  ];
+const directories = {
+    in: path.join(__dirname, 'test', 'in') + path.sep,
+    out: path.join(__dirname, 'test', 'out') + path.sep
+};
 
-  var grid1 = grid(bbox1, 20, 'miles');
-  var grid2 = grid(bbox2, 5, 'miles');
-  var grid3 = grid(bbox3, 2, 'miles');
-  var grid4 = grid(bbox4, 50, 'miles');
+let fixtures = fs.readdirSync(directories.in).map(filename => {
+    return {
+        filename,
+        name: path.parse(filename).name,
+        json: load.sync(directories.in + filename)
+    };
+});
 
-  if (process.env.REGEN) {
-    fs.writeFileSync(__dirname+'/test/out/grid1.geojson', JSON.stringify(grid1,null,2));
-    fs.writeFileSync(__dirname+'/test/out/grid2.geojson', JSON.stringify(grid2,null,2));
-    fs.writeFileSync(__dirname+'/test/out/grid3.geojson', JSON.stringify(grid3,null,2));
-    fs.writeFileSync(__dirname+'/test/out/grid4.geojson', JSON.stringify(grid4,null,2));
-  }
+test('square-grid', t => {
+    for (const {name, json} of fixtures) {
+        const {bbox, cellSide, units, properties, mask} = json;
+        const options = {
+            mask,
+            units,
+            properties,
+        }
+        const result = truncate(squareGrid(bbox, cellSide, options));
 
-  t.deepEqual(JSON.parse(fs.readFileSync(__dirname+'/test/out/grid1.geojson')), grid1, 'grid is correct');
-  t.deepEqual(JSON.parse(fs.readFileSync(__dirname+'/test/out/grid2.geojson')), grid2, 'grid is correct');
-  t.deepEqual(JSON.parse(fs.readFileSync(__dirname+'/test/out/grid3.geojson')), grid3, 'grid is correct');
-  t.deepEqual(JSON.parse(fs.readFileSync(__dirname+'/test/out/grid4.geojson')), grid4, 'grid is correct');
+        // Add styled GeoJSON to the result
+        const poly = bboxPoly(bbox);
+        poly.properties = {
+            stroke: '#F00',
+            'stroke-width': 6,
+            'fill-opacity': 0
+        };
+        result.features.push(poly);
+        if (options.mask) {
+            options.mask.properties = {
+                "stroke": "#00F",
+                "stroke-width": 6,
+                "fill-opacity": 0
+            };
+            result.features.push(options.mask);
+        }
 
-  t.end();
+        if (process.env.REGEN) write.sync(directories.out + name + '.geojson', result);
+        t.deepEqual(result, load.sync(directories.out + name + '.geojson'), name);
+    }
+    t.end();
+});
+
+
+test('square-grid -- throw', t => {
+    const bbox = [0, 0, 1, 1];
+    t.throws(() => squareGrid(null, 0), /bbox is required/, 'missing bbox');
+    t.throws(() => squareGrid('string', 0), /bbox must be array/, 'invalid bbox');
+    t.throws(() => squareGrid([0, 2], 0), /bbox must contain 4 numbers/, 'invalid bbox');
+    t.throws(() => squareGrid(bbox, null), /cellSide is required/, 'missing cellSide');
+    t.throws(() => squareGrid(bbox, 'string'), /cellSide is invalid/, 'invalid cellSide');
+    t.throws(() => squareGrid(bbox, 1, 'string'), /options is invalid/, 'invalid options');
+    t.end();
 });

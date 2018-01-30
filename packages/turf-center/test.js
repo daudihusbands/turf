@@ -1,25 +1,40 @@
-var test = require('tape');
-var center = require('./');
-var fs = require('fs');
+import fs from 'fs';
+import test from 'tape';
+import glob from 'glob';
+import path from 'path';
+import load from 'load-json-file';
+import write from 'write-json-file';
+import bboxPolygon from '@turf/bbox-polygon';
+import bbox from '@turf/bbox';
+import { featureEach, coordEach } from '@turf/meta';
+import { lineString, featureCollection } from '@turf/helpers';
+import center from '.';
 
-var boxFC = JSON.parse(fs.readFileSync(__dirname+'/test/in/box.geojson'));
-var blockFC = JSON.parse(fs.readFileSync(__dirname+'/test/in/block.geojson'));
+test('turf-center', t => {
+    glob.sync(path.join(__dirname, 'test', 'in', '*.geojson')).forEach(filepath => {
+        const geojson = load.sync(filepath);
+        const options = geojson.options || {};
+        options.properties = {'marker-symbol': 'star', 'marker-color': '#F00'};
+        const centered = center(geojson, options);
 
-test('center', function(t){
-  var boxFcCenter = center(boxFC);
-  boxFcCenter.properties['marker-color'] = '#f0f';
-  t.ok(boxFcCenter, 'should return the proper center for a FeatureCollection');
-  t.deepEqual(boxFcCenter.geometry.coordinates, [65.56640625, 43.59448261855401]);
+        // Display Results
+        const results = featureCollection([centered])
+        featureEach(geojson, feature => results.features.push(feature))
+        const extent = bboxPolygon(bbox(geojson))
+        extent.properties = {stroke: '#00F', 'stroke-width': 1, 'fill-opacity': 0}
+        coordEach(extent, coord => results.features.push(lineString([coord, centered.geometry.coordinates], {stroke: '#00F', 'stroke-width': 1})))
+        results.features.push(extent)
 
-  var blockFcCenter = center(blockFC.features[0]);
-  blockFcCenter.properties['marker-color'] = '#f0f';
-  t.ok(blockFcCenter, 'should return the proper center for a FeatureCollection');
-  t.deepEqual(blockFcCenter.geometry.coordinates, [ -114.02911397119072, 51.050271120392566]);
+        const out = filepath.replace(path.join('test', 'in'), path.join('test', 'out'))
+        if (process.env.REGEN) write.sync(out, results);
+        t.deepEqual(results, load.sync(out), path.parse(filepath).name);
+    });
+    t.end();
+});
 
-  boxFC.features.push(boxFcCenter);
-  blockFC.features.push(blockFcCenter);
-  fs.writeFileSync(__dirname+'/test/out/box_out.geojson', JSON.stringify(boxFC,null,2));
-  fs.writeFileSync(__dirname+'/test/out/block_out.geojson', JSON.stringify(blockFC,null,2));
-
-  t.end();
+test('turf-center -- properties', t => {
+    const line = lineString([[0, 0], [1, 1]]);
+    const pt = center(line, {properties: {foo: 'bar'}});
+    t.equal(pt.properties.foo, 'bar', 'translate properties');
+    t.end();
 });

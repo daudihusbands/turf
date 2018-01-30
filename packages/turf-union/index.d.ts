@@ -1,23 +1,9 @@
-/// <reference types="geojson" />
+import { Feature, Polygon, MultiPolygon } from '@turf/helpers'
 
-type LineString = GeoJSON.Feature<GeoJSON.LineString>;
-type Polygon = GeoJSON.Feature<GeoJSON.Polygon>;
-type MultiLineString = GeoJSON.Feature<GeoJSON.MultiLineString>;
-type MultiPolygon = GeoJSON.Feature<GeoJSON.MultiPolygon>;
-type LineStrings = GeoJSON.FeatureCollection<GeoJSON.LineString>;
-type Polygons = GeoJSON.FeatureCollection<GeoJSON.Polygon>;
-type MultiLineStrings = GeoJSON.FeatureCollection<GeoJSON.MultiLineString>;
-type MultiPolygons = GeoJSON.FeatureCollection<GeoJSON.MultiPolygon>;
-type Features = GeoJSON.FeatureCollection<any>;
-type GeometryCollection = GeoJSON.GeometryCollection;
-
-interface UnionStatic {
-    /**
-     * http://turfjs.org/docs/#union
-     */
-    
-    (feature: LineString, tolerance?: number, highQuality?: boolean): LineString;
-}
-declare const union: UnionStatic;
-declare namespace union { }
-export = union;
+/**
+ * http://turfjs.org/docs/#union
+ */
+export default function (
+    polygon1: Feature<Polygon | MultiPolygon> | Polygon | MultiPolygon,
+    polygon2: Feature<Polygon | MultiPolygon> | Polygon | MultiPolygon
+): Feature<Polygon | MultiPolygon>;

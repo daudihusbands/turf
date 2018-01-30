@@ -1,45 +1,44 @@
-var distance = require('@turf/distance');
+import distance from '@turf/distance';
 
 /**
  * Takes a bounding box and calculates the minimum square bounding box that
  * would contain the input.
  *
  * @name square
- * @param {Array<number>} bbox extent in [minX, minY, maxX, maxY] order
- * @return {Array<number>} a square surrounding `bbox`
+ * @param {BBox} bbox extent in [west, south, east, north] order
+ * @returns {BBox} a square surrounding `bbox`
  * @example
- * var bbox = [-20,-20,-15,0];
- *
+ * var bbox = [-20, -20, -15, 0];
  * var squared = turf.square(bbox);
  *
- * var features = {
- *   "type": "FeatureCollection",
- *   "features": [
- *     turf.bboxPolygon(bbox),
- *     turf.bboxPolygon(squared)
- *   ]
- * };
- *
- * //=features
+ * //addToMap
+ * var addToMap = [turf.bboxPolygon(bbox), turf.bboxPolygon(squared)]
  */
-module.exports = function (bbox) {
-    var horizontalDistance = distance(bbox.slice(0, 2), [bbox[2], bbox[1]], 'miles');
-    var verticalDistance = distance(bbox.slice(0, 2), [bbox[0], bbox[3]], 'miles');
+function square(bbox) {
+    var west = bbox[0];
+    var south = bbox[1];
+    var east = bbox[2];
+    var north = bbox[3];
+
+    var horizontalDistance = distance(bbox.slice(0, 2), [east, south]);
+    var verticalDistance = distance(bbox.slice(0, 2), [west, north]);
     if (horizontalDistance >= verticalDistance) {
-        var verticalMidpoint = (bbox[1] + bbox[3]) / 2;
+        var verticalMidpoint = (south + north) / 2;
         return [
-            bbox[0],
-            verticalMidpoint - ((bbox[2] - bbox[0]) / 2),
-            bbox[2],
-            verticalMidpoint + ((bbox[2] - bbox[0]) / 2)
+            west,
+            verticalMidpoint - ((east - west) / 2),
+            east,
+            verticalMidpoint + ((east - west) / 2)
         ];
     } else {
-        var horizontalMidpoint = (bbox[0] + bbox[2]) / 2;
+        var horizontalMidpoint = (west + east) / 2;
         return [
-            horizontalMidpoint - ((bbox[3] - bbox[1]) / 2),
-            bbox[1],
-            horizontalMidpoint + ((bbox[3] - bbox[1]) / 2),
-            bbox[3]
+            horizontalMidpoint - ((north - south) / 2),
+            south,
+            horizontalMidpoint + ((north - south) / 2),
+            north
         ];
     }
-};
+}
+
+export default square;

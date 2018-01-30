@@ -1,6 +1,5 @@
-var polygon = require('@turf/helpers').polygon;
-var earcut = require('earcut');
-
+import earcut from 'earcut';
+import { polygon } from '@turf/helpers';
 
 /**
  * Tesselates a {@link Feature<Polygon>} into a {@link FeatureCollection<Polygon>} of triangles
@@ -10,13 +9,13 @@ var earcut = require('earcut');
  * @param {Feature<Polygon>} poly the polygon to tesselate
  * @returns {FeatureCollection<Polygon>} a geometrycollection feature
  * @example
- * var poly = turf.random('polygon').features[0];
- *
+ * var poly = turf.polygon([[[11, 0], [22, 4], [31, 0], [31, 11], [21, 15], [11, 11], [11, 0]]]);
  * var triangles = turf.tesselate(poly);
  *
- * //=triangles
+ * //addToMap
+ * var addToMap = [poly, triangles]
  */
-module.exports = function (poly) {
+function tesselate(poly) {
     if (!poly.geometry || (poly.geometry.type !== 'Polygon' && poly.geometry.type !== 'MultiPolygon')) {
         throw new Error('input must be a Polygon or MultiPolygon');
     }
@@ -32,7 +31,7 @@ module.exports = function (poly) {
     }
 
     return fc;
-};
+}
 
 function processPolygon(coordinates) {
     var data = flattenCoords(coordinates);
@@ -73,3 +72,5 @@ function flattenCoords(data) {
 
     return result;
 }
+
+export default tesselate;

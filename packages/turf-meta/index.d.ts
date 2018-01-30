@@ -1,72 +1,220 @@
-/// <reference types="geojson" />
+import {
+    Point,
+    LineString,
+    Polygon,
+    MultiPoint,
+    MultiLineString,
+    MultiPolygon,
+    FeatureCollection,
+    Feature,
+    GeometryObject,
+    GeometryCollection,
+    AllGeoJSON,
+    Properties,
+    Geometries,
+    Lines,
+    BBox,
+    Id
+} from '@turf/helpers';
 
-type Points = GeoJSON.FeatureCollection<GeoJSON.Point>
-type Point = GeoJSON.Feature<GeoJSON.Point> | GeoJSON.Point
-type MultiPoints = GeoJSON.FeatureCollection<GeoJSON.MultiPoint>
-type MultiPoint = GeoJSON.Feature<GeoJSON.MultiPoint> | GeoJSON.MultiPoint
-type LineStrings = GeoJSON.FeatureCollection<GeoJSON.LineString>
-type LineString = GeoJSON.Feature<GeoJSON.LineString> | GeoJSON.LineString
-type MultiLineStrings = GeoJSON.FeatureCollection<GeoJSON.MultiLineString>
-type MultiLineString = GeoJSON.Feature<GeoJSON.MultiLineString> | GeoJSON.MultiLineString
-type Polygons = GeoJSON.FeatureCollection<GeoJSON.Polygon>
-type Polygon = GeoJSON.Feature<GeoJSON.Polygon> | GeoJSON.Polygon
-type MultiPolygons = GeoJSON.FeatureCollection<GeoJSON.MultiPolygon>
-type MultiPolygon = GeoJSON.Feature<GeoJSON.MultiPolygon> | GeoJSON.MultiPolygon
-type Feature = GeoJSON.Feature<any>
-type Features = GeoJSON.FeatureCollection<any>
-type GeometryCollection = GeoJSON.GeometryCollection
-type GeometryObject = GeoJSON.GeometryObject
+/**
+ * http://turfjs.org/docs/#coordreduce
+ */
+export function coordReduce<Reducer extends any>(
+    geojson: AllGeoJSON,
+    callback: (previousValue: Reducer,
+               currentCoord: number[],
+               coordIndex: number,
+               featureIndex: number,
+               multiFeatureIndex: number,
+               geometryIndex: number) => Reducer,
+    initialValue?: Reducer
+): Reducer;
 
-interface MetaStatic {
-    /**
-     * http://turfjs.org/docs/#coordEach
-     */
-    coordEach(layer: Points | Point | MultiPoint | MultiPoints, callback: (coords: Array<number>) => void, excludeWrapCoord?: boolean): void;
-    coordEach(layer: LineStrings | LineString | MultiLineString | MultiLineStrings, callback: (coords: Array<Array<number>>) => void, excludeWrapCoord?: boolean): void;
-    coordEach(layer: Polygons | Polygon | MultiPolygons | MultiPolygon, callback: (coords: Array<Array<Array<number>>>) => void, excludeWrapCoord?: boolean): void;
-    coordEach(layer: GeometryCollection | GeometryObject, callback: (coords: Array<any>) => void, excludeWrapCoord?: boolean): void;
+/**
+ * http://turfjs.org/docs/#coordeach
+ */
+export function coordEach(
+    geojson: AllGeoJSON,
+    callback: (currentCoord: number[],
+               coordIndex: number,
+               featureIndex: number,
+               multiFeatureIndex: number,
+               geometryIndex: number) => void
+): void;
 
-    /**
-     * http://turfjs.org/docs/#coordEach
-     */
-    coordReduce(layer: Points | Point | MultiPoint | MultiPoints, callback: (memo: any, coords: Array<number>) => void, memo: any, excludeWrapCoord?: boolean): any;
-    coordReduce(layer: LineStrings | LineString | MultiLineString | MultiLineStrings, callback: (memo: any, coords: Array<Array<number>>) => void, memo: any, excludeWrapCoord?: boolean): any;
-    coordReduce(layer: Polygons | Polygon | MultiPolygons | MultiPolygon, callback: (memo: any, coords: Array<Array<Array<number>>>) => void, memo: any, excludeWrapCoord?: boolean): any;
-    coordReduce(layer: GeometryCollection | GeometryObject, callback: (memo: any, coords: Array<any>) => void, memo: any, excludeWrapCoord?: boolean): any;
+/**
+ * http://turfjs.org/docs/#propeach
+ */
+export function propEach<Props extends Properties>(
+    geojson: Feature<any> | FeatureCollection<any> | Feature<GeometryCollection>,
+    callback: (currentProperties: Props,
+               featureIndex: number) => void
+): void;
 
-    /**
-     * http://turfjs.org/docs/#propEach
-     */
-    propEach(layer: Feature | Features, callback: (properties: any) => void): void;
+/**
+ * http://turfjs.org/docs/#propreduce
+ */
+export function propReduce<Reducer extends any, P = Properties>(
+    geojson: Feature<any, P> | FeatureCollection<any, P> | Geometries | GeometryCollection,
+    callback: (previousValue: Reducer,
+               currentProperties: P,
+               featureIndex: number) => Reducer,
+    initialValue?: Reducer
+): Reducer;
 
-    /**
-     * http://turfjs.org/docs/#featureEach
-     */
-    featureEach(layer: Point | Points, callback: (feature: Point) => void): void;
-    featureEach(layer: LineString | LineStrings, callback: (feature: LineString) => void): void;
-    featureEach(layer: Polygon | Polygons, callback: (feature: Polygon) => void): void;
-    featureEach(layer: MultiPoint | MultiPoints, callback: (feature: MultiPoint) => void): void;
-    featureEach(layer: MultiLineString | MultiLineStrings, callback: (feature: MultiLineString) => void): void;
-    featureEach(layer: MultiPolygon | MultiPolygons, callback: (feature: MultiPolygon) => void): void;
-    featureEach(layer: Feature | Features, callback: (feature: Feature) => void): void;
+/**
+ * http://turfjs.org/docs/#featurereduce
+ */
+export function featureReduce<Reducer extends any, G extends Geometries, P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | Feature<GeometryCollection, P>,
+    callback: (previousValue: Reducer,
+               currentFeature: Feature<G, P>,
+               featureIndex: number) => Reducer,
+    initialValue?: Reducer
+): Reducer;
 
-    /**
-     * http://turfjs.org/docs/#coordAll
-     */
-    coordAll(layer: Feature | Features | GeometryCollection | GeometryObject): Array<Array<number>>
+/**
+ * http://turfjs.org/docs/#featureeach
+ */
+export function featureEach<G extends Geometries, P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | Feature<GeometryCollection, P>,
+    callback: (currentFeature: Feature<G, P>,
+               featureIndex: number) => void
+): void;
 
-    /**
-     * http://turfjs.org/docs/#geomEach
-     */
-    geomEach(layer: Point | Points, callback: (geom: GeoJSON.Point) => void): void;
-    geomEach(layer: LineString | LineStrings, callback: (geom: GeoJSON.LineString) => void): void;
-    geomEach(layer: Polygon | Polygons, callback: (geom: GeoJSON.Polygon) => void): void;
-    geomEach(layer: MultiPoint | MultiPoints, callback: (geom: GeoJSON.MultiPoint) => void): void;
-    geomEach(layer: MultiLineString | MultiLineStrings, callback: (geom: GeoJSON.MultiLineString) => void): void;
-    geomEach(layer: MultiPolygon | MultiPolygons, callback: (geom: GeoJSON.MultiPolygon) => void): void;
-    geomEach(layer: Feature | Features, callback: (geom: GeometryObject) => void): void;
-    geomEach(layer: GeometryCollection | GeometryObject, callback: (geom: GeometryObject) => void): void;
-}
+/**
+ * http://turfjs.org/docs/#coordall
+ */
+export function coordAll(geojson: AllGeoJSON): number[][];
 
-declare const meta: MetaStatic
-export = meta
+/**
+ * http://turfjs.org/docs/#geomreduce
+ */
+export function geomReduce<Reducer extends any, G extends Geometries, P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | G | GeometryCollection | Feature<GeometryCollection, P>,
+    callback: (previousValue: Reducer,
+               currentGeometry: G,
+               featureIndex: number,
+               featureProperties: P,
+               featureBBox: BBox,
+               featureId: Id) => Reducer,
+    initialValue?: Reducer
+): Reducer;
+
+/**
+ * http://turfjs.org/docs/#geomeach
+ */
+export function geomEach<G extends (Geometries | null), P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | G | GeometryCollection | Feature<GeometryCollection, P>,
+    callback: (currentGeometry: G,
+               featureIndex: number,
+               featureProperties: P,
+               featureBBox: BBox,
+               featureId: Id) => void
+): void;
+
+/**
+ * http://turfjs.org/docs/#flattenreduce
+ */
+export function flattenReduce<Reducer extends any, G extends Geometries, P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | G | GeometryCollection | Feature<GeometryCollection, P>,
+    callback: (previousValue: Reducer,
+               currentFeature: Feature<G, P>,
+               featureIndex: number,
+               multiFeatureIndex: number) => Reducer,
+    initialValue?: Reducer
+): Reducer;
+
+/**
+ * http://turfjs.org/docs/#flatteneach
+ */
+export function flattenEach<G = Geometries, P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | G | GeometryCollection | Feature<GeometryCollection, P>,
+    callback: (currentFeature: Feature<G, P>,
+               featureIndex: number,
+               multiFeatureIndex: number) => void
+): void;
+
+/**
+ * http://turfjs.org/docs/#segmentreduce
+ */
+export function segmentReduce<Reducer extends any, P = Properties>(
+    geojson: FeatureCollection<Lines, P> | Feature<Lines, P> | Lines | Feature<GeometryCollection, P> | GeometryCollection,
+    callback: (previousValue?: Reducer,
+               currentSegment?: Feature<LineString, P>,
+               featureIndex?: number,
+               multiFeatureIndex?: number,
+               segmentIndex?: number,
+               geometryIndex?: number) => Reducer,
+    initialValue?: Reducer
+): Reducer;
+
+/**
+ * http://turfjs.org/docs/#segmenteach
+ */
+export function segmentEach<P = Properties>(
+    geojson: AllGeoJSON,
+    callback: (currentSegment?: Feature<LineString, P>,
+               featureIndex?: number,
+               multiFeatureIndex?: number,
+               segmentIndex?: number,
+               geometryIndex?: number) => void
+): void;
+
+/**
+ * http://turfjs.org/docs/#linereduce
+ */
+export function lineReduce<Reducer extends any, P = Properties>(
+    geojson: FeatureCollection<Lines, P> | Feature<Lines, P> | Lines | Feature<GeometryCollection, P> | GeometryCollection,
+    callback: (previousValue?: Reducer,
+               currentLine?: Feature<LineString, P>,
+               featureIndex?: number,
+               multiFeatureIndex?: number,
+               geometryIndex?: number) => Reducer,
+    initialValue?: Reducer
+): Reducer;
+
+/**
+ * http://turfjs.org/docs/#lineeach
+ */
+export function lineEach<P = Properties>(
+    geojson: FeatureCollection<Lines, P> | Feature<Lines, P> | Lines | Feature<GeometryCollection, P> | GeometryCollection,
+    callback: (currentLine?: Feature<LineString, P>,
+               featureIndex?: number,
+               multiFeatureIndex?: number,
+               geometryIndex?: number) => void
+): void;
+
+
+/**
+ * http://turfjs.org/docs/#findsegment
+ */
+export function findSegment<G extends LineString | MultiLineString | Polygon | MultiPolygon, P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | G,
+    options?: {
+        featureIndex?: number,
+        multiFeatureIndex?: number,
+        geometryIndex?: number,
+        segmentIndex?: number,
+        properties?: P,
+        bbox?: BBox,
+        id?: Id
+    }
+): Feature<LineString, P>;
+
+/**
+ * http://turfjs.org/docs/#findpoint
+ */
+export function findPoint<G extends GeometryObject, P = Properties>(
+    geojson: Feature<G, P> | FeatureCollection<G, P> | G,
+    options?: {
+        featureIndex?: number,
+        multiFeatureIndex?: number,
+        geometryIndex?: number,
+        coordIndex?: number,
+        properties?: P,
+        bbox?: BBox,
+        id?: Id
+    }
+): Feature<Point, P>;

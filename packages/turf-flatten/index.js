@@ -1,29 +1,32 @@
-var flatten = require('geojson-flatten');
-var featurecollection = require('@turf/helpers').featureCollection;
+import { flattenEach } from '@turf/meta';
+import { featureCollection } from '@turf/helpers';
 
 /**
- * Flattens any {@link GeoJSON} to a {@link FeatureCollection} using [geojson-flatten](https://github.com/mapbox/geojson-flatten).
+ * Flattens any {@link GeoJSON} to a {@link FeatureCollection} inspired by [geojson-flatten](https://github.com/tmcw/geojson-flatten).
  *
  * @name flatten
- * @param {Feature} geojson any valid {@link GeoJSON} with multi-geometry {@link Feature}s
- * @return {FeatureCollection} a flattened {@link FeatureCollection}
+ * @param {GeoJSON} geojson any valid GeoJSON Object
+ * @returns {FeatureCollection<any>} all Multi-Geometries are flattened into single Features
  * @example
- * var geometry = {
- *   "type": "MultiPolygon",
- *   "coordinates": [
- *     [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
- *      [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
- *      [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
- *    ]
- *  };
+ * var multiGeometry = turf.multiPolygon([
+ *   [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+ *   [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+ *   [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
+ * ]);
  *
- * var flattened = turf.flatten(geometry);
+ * var flatten = turf.flatten(multiGeometry);
  *
- * //=flattened
+ * //addToMap
+ * var addToMap = [flatten]
  */
+function flatten(geojson) {
+    if (!geojson) throw new Error('geojson is required');
 
-module.exports = function (geojson) {
-    var flattened = flatten(geojson);
-    if (flattened.type === 'FeatureCollection') return flattened;
-    else return featurecollection(flatten(geojson));
-};
+    var results = [];
+    flattenEach(geojson, function (feature) {
+        results.push(feature);
+    });
+    return featureCollection(results);
+}
+
+export default flatten;

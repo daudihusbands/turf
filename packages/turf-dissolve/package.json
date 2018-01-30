@@ -1,10 +1,27 @@
 {
   "name": "@turf/dissolve",
-  "version": "3.10.3",
-  "description": "Dissolves polygons based on an attribute",
-  "main": "index.js",
+  "version": "5.1.5",
+  "description": "turf dissolve module",
+  "main": "main.js",
+  "module": "main.es.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "main.js",
+    "lib",
+    "main.es.js"
+  ],
   "scripts": {
-    "test": "tape test.js"
+    "pretest": "rollup -c ../../rollup.config.js",
+    "test": "node -r @std/esm test.js",
+    "posttest": "node -r @std/esm ../../scripts/validate-es5-dependencies.js",
+    "bench": "node -r @std/esm bench.js",
+    "docs": "node ../../scripts/generate-readmes"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Turfjs/turf.git"
   },
   "keywords": [
     "turf",
@@ -15,25 +32,31 @@
   ],
   "author": "Turf Authors",
   "license": "MIT",
-  "dependencies": {
-    "@turf/bbox": "^3.10.3",
-    "@turf/helpers": "^3.10.3",
-    "@turf/union": "^3.10.0",
-    "geojson-utils": "^1.1.0",
-    "get-closest": "0.0.3",
-    "rbush": "^2.0.1",
-    "turf-overlaps": "^1.0.3"
-  },
-  "devDependencies": {
-    "tape": "^4.6.3"
-  },
-  "types": "index.d.ts",
-  "homepage": "https://github.com/Turfjs/turf",
   "bugs": {
     "url": "https://github.com/Turfjs/turf/issues"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/Turfjs/turf.git"
+  "homepage": "https://github.com/Turfjs/turf",
+  "devDependencies": {
+    "@std/esm": "*",
+    "benchmark": "*",
+    "load-json-file": "*",
+    "rollup": "*",
+    "tape": "*",
+    "write-json-file": "*"
+  },
+  "dependencies": {
+    "@turf/boolean-overlap": "^5.1.5",
+    "@turf/clone": "^5.1.5",
+    "@turf/helpers": "^5.1.5",
+    "@turf/invariant": "^5.1.5",
+    "@turf/line-intersect": "^5.1.5",
+    "@turf/meta": "^5.1.5",
+    "@turf/union": "^5.1.5",
+    "geojson-rbush": "2.1.0",
+    "get-closest": "*"
+  },
+  "@std/esm": {
+    "esm": "js",
+    "cjs": true
   }
 }

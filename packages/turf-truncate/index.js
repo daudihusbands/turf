@@ -1,58 +1,76 @@
-var deepSlice = require('deep-slice');
+import { coordEach } from '@turf/meta';
+import { isObject } from '@turf/helpers';
 
 /**
  * Takes a GeoJSON Feature or FeatureCollection and truncates the precision of the geometry.
  *
  * @name truncate
- * @param {(Feature|FeatureCollection)} layer any GeoJSON Feature or FeatureCollection
- * @param {number} [precision=6] coordinate decimal precision
- * @param {number} [coordinates=2] maximum number of coordinates (primarly used to remove z coordinates)
- * @returns {(Feature|FeatureCollection)} layer with truncated geometry
+ * @param {GeoJSON} geojson any GeoJSON Feature, FeatureCollection, Geometry or GeometryCollection.
+ * @param {Object} [options={}] Optional parameters
+ * @param {number} [options.precision=6] coordinate decimal precision
+ * @param {number} [options.coordinates=3] maximum number of coordinates (primarly used to remove z coordinates)
+ * @param {boolean} [options.mutate=false] allows GeoJSON input to be mutated (significant performance increase if true)
+ * @returns {GeoJSON} layer with truncated geometry
  * @example
- * var point = {
- *     "type": "Feature",
- *     "geometry": {
- *         "type": "Point",
- *         "coordinates": [
- *             70.46923055566859,
- *             58.11088890802906,
- *             1508
- *         ]
- *     },
- *     "properties": {}
- * };
- * var pointTrunc = turf.truncate(point);
- * //= pointTrunc
+ * var point = turf.point([
+ *     70.46923055566859,
+ *     58.11088890802906,
+ *     1508
+ * ]);
+ * var options = {precision: 3, coordinates: 2};
+ * var truncated = turf.truncate(point, options);
+ * //=truncated.geometry.coordinates => [70.469, 58.111]
+ *
+ * //addToMap
+ * var addToMap = [truncated];
  */
-module.exports = function (layer, precision, coordinates) {
-    precision = precision || 6;
-    coordinates = coordinates || 2;
+function truncate(geojson, options) {
+    // Optional parameters
+    options = options || {};
+    if (!isObject(options)) throw new Error('options is invalid');
+    var precision = options.precision;
+    var coordinates = options.coordinates;
+    var mutate = options.mutate;
 
-    if (layer === undefined) { throw new Error('layer is required'); }
+    // default params
+    precision = (precision === undefined || precision === null || isNaN(precision)) ? 6 : precision;
+    coordinates = (coordinates === undefined || coordinates === null || isNaN(coordinates)) ? 3 : coordinates;
 
-    switch (layer.type) {
-    case 'FeatureCollection': {
-        layer.features = layer.features.map(function (feature) {
-            return truncate(feature, precision, coordinates);
-        });
-        return layer;
-    }
-    case 'Feature':
-        return truncate(layer, precision, coordinates);
-    default:
-        throw new Error('invalid type');
-    }
-};
+    // validation
+    if (!geojson) throw new Error('<geojson> is required');
+    if (typeof precision !== 'number') throw new Error('<precision> must be a number');
+    if (typeof coordinates !== 'number') throw new Error('<coordinates> must be a number');
 
-function truncate(feature, precision, coordinates) {
-    if (coordinates !== undefined) { feature.geometry.coordinates = deepSlice(feature.geometry.coordinates, 0, coordinates); }
-    feature.geometry.coordinates = toFix(feature.geometry.coordinates, precision);
-    return feature;
-}
+    // prevent input mutation
+    if (mutate === false || mutate === undefined) geojson = JSON.parse(JSON.stringify(geojson));
 
-function toFix(array, precision) {
-    return array.map(function (value) {
-        if (typeof value === 'object') { return toFix(value, precision); }
-        return Number(value.toFixed(precision));
+    var factor = Math.pow(10, precision);
+
+    // Truncate Coordinates
+    coordEach(geojson, function (coords) {
+        truncateCoords(coords, factor, coordinates);
     });
+    return geojson;
 }
+
+/**
+ * Truncate Coordinates - Mutates coordinates in place
+ *
+ * @private
+ * @param {Array<any>} coords Geometry Coordinates
+ * @param {number} factor rounding factor for coordinate decimal precision
+ * @param {number} coordinates maximum number of coordinates (primarly used to remove z coordinates)
+ * @returns {Array<any>} mutated coordinates
+ */
+function truncateCoords(coords, factor, coordinates) {
+    // Remove extra coordinates (usually elevation coordinates and more)
+    if (coords.length > coordinates) coords.splice(coordinates, coords.length);
+
+    // Truncate coordinate decimals
+    for (var i = 0; i < coords.length; i++) {
+        coords[i] = Math.round(coords[i] * factor) / factor;
+    }
+    return coords;
+}
+
+export default truncate;

@@ -1,16 +1,34 @@
-var test = require('tape');
-var distance = require('@turf/distance');
-var destination = require('./');
+import path from 'path';
+import test from 'tape';
+import glob from 'glob';
+import load from 'load-json-file';
+import write from 'write-json-file';
+import { getCoords } from '@turf/invariant';
+import { lineString, featureCollection, round } from '@turf/helpers';
+import truncate from '@turf/truncate';
+import destination from '.';
 
-test('destination', function(t){
-  var pt1 = {
-    type: "Feature",
-    geometry: {type: "Point", coordinates: [-75.0, 39.0]}
-  };
-  var dist = 100;
-  var bear = 180;
+const directories = {
+    in: path.join(__dirname, 'test', 'in') + path.sep,
+    out: path.join(__dirname, 'test', 'out') + path.sep
+};
 
-  var pt2 = destination(pt1, dist, bear, 'kilometers');
-  t.deepEqual(pt2, { geometry: { coordinates: [ -75, 38.10096062273525 ], type: 'Point' }, properties: {}, type: 'Feature' }, 'returns the correct point');
-  t.end();
+test('turf-destination', t => {
+    glob.sync(directories.in + '*.geojson').forEach(filepath => {
+        const geojson = load.sync(filepath);
+        const name = path.parse(filepath).name;
+        const base = path.parse(filepath).base;
+
+        // Params
+        const properties = geojson.properties || {};
+        const bearing = (properties.bearing !== undefined) ? properties.bearing : 180;
+        const dist = (properties.dist !== undefined) ? properties.dist : 100;
+
+        const dest = truncate(destination(geojson, dist, bearing));
+        const result = featureCollection([geojson, dest, lineString([getCoords(geojson), getCoords(dest)])]);
+
+        if (process.env.REGEN) write.sync(directories.out + base, result);
+        t.deepEqual(result, load.sync(directories.out + base), name);
+    });
+    t.end();
 });

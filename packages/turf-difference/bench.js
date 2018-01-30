@@ -1,22 +1,38 @@
-var difference = require('./');
-var Benchmark = require('benchmark');
-var fs = require('fs');
+const fs = require('fs');
+const path = require('path');
+const load = require('load-json-file');
+const Benchmark = require('benchmark');
+const difference = require('./');
 
-var clip = JSON.parse(fs.readFileSync(__dirname+'/test/fixtures/in/differencedHole.geojson'));
-var hole = JSON.parse(fs.readFileSync(__dirname+'/test/fixtures/in/differencedFC.geojson'));
+const directory = path.join(__dirname, 'test', 'in') + path.sep;
+let fixtures = fs.readdirSync(directory).map(filename => {
+    return {
+        filename,
+        name: path.parse(filename).name,
+        geojson: load.sync(directory + filename)
+    };
+});
+// fixtures = fixtures.filter(({name}) => name === 'issue-#721');
 
-var suite = new Benchmark.Suite('turf-difference');
+/**
+ * Benchmark Results
+ *
+ * ==using martinez==
+ * clip-polygons x 38,724 ops/sec ±11.98% (65 runs sampled)
+ * completely-overlapped x 70,644 ops/sec ±8.29% (67 runs sampled)
+ * create-hole x 62,128 ops/sec ±7.45% (75 runs sampled)
+ * issue-#721-inverse x 354,473 ops/sec ±2.46% (81 runs sampled)
+ * issue-#721 x 339,053 ops/sec ±3.24% (78 runs sampled)
+ * multi-polygon-input x 17,728 ops/sec ±10.01% (64 runs sampled)
+ * multi-polygon-target x 14,077 ops/sec ±6.52% (75 runs sampled)
+ * split-polygon x 29,258 ops/sec ±8.99% (69 runs sampled)
+ */
+const suite = new Benchmark.Suite('turf-difference');
+for (const {name, geojson} of fixtures) {
+    suite.add(name, () => difference(geojson.features[0], geojson.features[1]));
+}
+
 suite
-  .add('turf-difference#clip',function () {
-    difference(clip[0], clip[1]);
-  })
-  .add('turf-difference#hole',function () {
-    difference(hole[0], hole[1]);
-  })
-  .on('cycle', function (event) {
-    console.log(String(event.target));
-  })
-  .on('complete', function () {
-    
-  })
-  .run();
+    .on('cycle', e => console.log(String(e.target)))
+    .on('complete', () => {})
+    .run();

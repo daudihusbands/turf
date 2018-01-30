@@ -1,10 +1,22 @@
 {
   "name": "@turf/circle",
-  "version": "3.10.3",
+  "version": "5.1.5",
   "description": "turf circle module",
-  "main": "index.js",
+  "main": "main.js",
+  "module": "main.es.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "main.js",
+    "main.es.js"
+  ],
   "scripts": {
-    "test": "tape test.js"
+    "pretest": "rollup -c ../../rollup.config.js",
+    "test": "node -r @std/esm test.js",
+    "posttest": "node -r @std/esm ../../scripts/validate-es5-dependencies.js",
+    "bench": "node -r @std/esm bench.js",
+    "docs": "node ../../scripts/generate-readmes"
   },
   "repository": {
     "type": "git",
@@ -25,14 +37,21 @@
   },
   "homepage": "https://github.com/Turfjs/turf",
   "devDependencies": {
-    "benchmark": "^1.0.0",
-    "tape": "^3.5.0",
-    "@turf/distance": "^3.10.3",
-    "@turf/inside": "^3.10.3"
+    "@mapbox/geojsonhint": "*",
+    "@std/esm": "*",
+    "@turf/truncate": "^5.1.5",
+    "benchmark": "*",
+    "load-json-file": "*",
+    "rollup": "*",
+    "tape": "*",
+    "write-json-file": "*"
   },
   "dependencies": {
-    "@turf/destination": "^3.10.3",
-    "@turf/helpers": "^3.10.3"
+    "@turf/destination": "^5.1.5",
+    "@turf/helpers": "^5.1.5"
   },
-  "types": "index.d.ts"
+  "@std/esm": {
+    "esm": "js",
+    "cjs": true
+  }
 }

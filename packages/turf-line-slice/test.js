@@ -1,44 +1,36 @@
-const test = require('tape');
-const fs = require('fs');
-const path = require('path');
-const load = require('load-json-file');
-const write = require('write-json-file');
-const mkdirp = require('mkdirp');
-const featureCollection = require('@turf/helpers').featureCollection;
-const truncate = require('@turf/truncate');
-const lineSlice = require('./');
+import fs from 'fs';
+import test from 'tape';
+import path from 'path';
+import load from 'load-json-file';
+import write from 'write-json-file';
+import truncate from '@turf/truncate';
+import { featureCollection } from '@turf/helpers';
+import lineSlice from './';
 
 const directories = {
     in: path.join(__dirname, 'test', 'in') + path.sep,
     out: path.join(__dirname, 'test', 'out') + path.sep
 };
 
-const fixtures = fs.readdirSync(directories.in).map(folder => {
+const fixtures = fs.readdirSync(directories.in).map(filename => {
     return {
-        folder,
-        linestring: load.sync(path.join(directories.in, folder, 'linestring.geojson')),
-        start: load.sync(path.join(directories.in, folder, 'start.geojson')),
-        stop: load.sync(path.join(directories.in, folder, 'stop.geojson'))
+        filename,
+        name: path.parse(filename).name,
+        geojson: load.sync(directories.in + filename)
     };
 });
 
 test('turf-line-slice', t => {
-    for (const {folder, linestring, start, stop} of fixtures) {
-        const output = path.join(directories.out, folder) + path.sep;
-
+    for (const {filename, geojson, name} of fixtures) {
+        const [linestring, start, stop] = geojson.features;
         const sliced = truncate(lineSlice(start, stop, linestring));
         sliced.properties['stroke'] = '#f0f';
         sliced.properties['stroke-width'] = 6;
+        const results = featureCollection(geojson.features);
+        results.features.push(sliced);
 
-        const results = featureCollection([linestring, start, stop, sliced]);
-        if (process.env.REGEN) {
-            mkdirp.sync(output);
-            write.sync(output + 'sliced.geojson', sliced);
-            write.sync(output + 'results.geojson', results);
-        }
-        const expected = load.sync(output + 'sliced.geojson');
-
-        t.deepEquals(sliced, expected, folder);
+        if (process.env.REGEN) write.sync(directories.out + filename, results);
+        t.deepEquals(results, load.sync(directories.out + filename), name);
     }
     t.end();
 });

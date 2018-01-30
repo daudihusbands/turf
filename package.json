@@ -1,12 +1,15 @@
 {
   "private": true,
-  "version": "3.0.0",
+  "version": "5.0.0",
   "description": "a node.js library for performing geospatial operations with geojson",
   "scripts": {
-    "test": "npm run lint && lerna bootstrap && lerna run test && npm run types",
-    "lint": "eslint packages",
-    "types": "tsc",
-    "prepublish": "node ./scripts/generate-readmes"
+    "prelint": "tsc",
+    "lint": "eslint packages/turf-*/index.js",
+    "postlint": "documentation lint packages/turf-*/index.js",
+    "pretest": "lerna bootstrap && npm run lint",
+    "test": "lerna run test",
+    "docs": "node ./scripts/generate-readmes",
+    "5to6": "jscodeshift -t node_modules/5to6-codemod/transforms/cjs.js packages/turf-*/bench.js"
   },
   "repository": {
     "type": "git",
@@ -45,15 +48,36 @@
     "url": "https://github.com/Turfjs/turf/issues"
   },
   "devDependencies": {
-    "@types/geojson": "0.0.31",
-    "@types/node": "^6.0.56",
-    "browserify": "^13.0.0",
-    "d3-queue": "3.0.1",
-    "documentation": "4.0.0-beta7",
-    "eslint": "^2.0.0",
-    "eslint-config-mourner": "^2.0.0",
-    "lerna": "2.0.0-beta.34",
-    "typescript": "^2.2.1",
-    "uglify-js": "~2.4.16"
+    "5to6-codemod": "*",
+    "@std/esm": "*",
+    "@types/geojson": "*",
+    "@types/node": "*",
+    "@types/tape": "*",
+    "babel-plugin-external-helpers": "*",
+    "babel-preset-env": "*",
+    "camelcase": "*",
+    "d3-queue": "*",
+    "decamelize": "*",
+    "documentation": "*",
+    "eslint": "*",
+    "eslint-config-mourner": "*",
+    "fs-extra": "*",
+    "jscodeshift": "*",
+    "lerna": "*",
+    "load-json-file": "*",
+    "meow": "*",
+    "progress": "*",
+    "rollup": "*",
+    "rollup-plugin-buble": "*",
+    "rollup-plugin-commonjs": "*",
+    "rollup-plugin-node-resolve": "*",
+    "rollup-plugin-uglify": "*",
+    "tape": "*",
+    "typescript": "*",
+    "yamljs": "*"
+  },
+  "@std/esm": {
+    "esm": "js",
+    "cjs": true
   }
 }

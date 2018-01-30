@@ -1,35 +1,43 @@
-var fs = require('fs');
-var dissolve = require('./index');
-var test = require('tape');
-var path = require('path');
+import fs from 'fs';
+import test from 'tape';
+import path from 'path';
+import load from 'load-json-file';
+import write from 'write-json-file';
+import {polygon, point, featureCollection} from '@turf/helpers';
+import dissolve from './';
 
-var directories = {
-    out: path.join(__dirname, 'test', 'out'),
-    in: path.join(__dirname, 'test', 'in')
-}
+const directories = {
+    in: path.join(__dirname, 'test', 'in') + path.sep,
+    out: path.join(__dirname, 'test', 'out') + path.sep
+};
 
-function save (directory, filename, features) {
-  return fs.writeFileSync(path.join(directory, filename), JSON.stringify(features, null, 2))
-}
+const fixtures = fs.readdirSync(directories.in).map(filename => {
+    return {
+        filename,
+        name: path.parse(filename).name,
+        geojson: load.sync(directories.in + filename)
+    };
+});
 
-function read (directory, filename) {
-  return JSON.parse(fs.readFileSync(path.join(directory, filename), 'utf8'))
-}
 
-test('turf-dissolve', function (t) {
-    var polys = read(directories.in, 'polys.json');
+test('turf-dissolve', t => {
+    for (const {filename, name, geojson}  of fixtures) {
+        const propertyName = geojson.propertyName;
+        const results = dissolve(geojson, {propertyName});
 
-    // With Property
-    var polysByProperty = dissolve(polys, 'combine');
-    if (process.env.REGEN) { save(directories.out, 'polysByProperty.json', polysByProperty); }
-    t.equal(polysByProperty.features.length, 3);
-    t.deepEqual(polysByProperty, read(directories.out, 'polysByProperty.json'));
+        if (process.env.REGEN) write.sync(directories.out + filename, results);
+        t.deepEquals(results, load.sync(directories.out + filename), name);
+    }
+    t.end();
+});
 
-    // Without Property
-    var polysWithoutProperty = dissolve(polys);
-    if (process.env.REGEN) { save(directories.out, 'polysWithoutProperty.json', polysWithoutProperty); }
-    t.equal(polysWithoutProperty.features.length, 2);
-    t.deepEqual(polysWithoutProperty, read(directories.out, 'polysWithoutProperty.json'));
 
+test('dissolve -- throw', t => {
+    const poly = polygon([[[-61,27],[-59,27],[-59,29],[-61,29],[-61,27]]]);
+    const pt = point([-62,29]);
+
+    t.throws(() => dissolve(null), /No featureCollection passed/, 'missing featureCollection');
+    t.throws(() => dissolve(poly), /Invalid input to dissolve, FeatureCollection required/, 'invalid featureCollection');
+    t.throws(() => dissolve(featureCollection([poly, pt])), /Invalid input to dissolve: must be a Polygon, given Point/, 'invalid collection type');
     t.end();
 });

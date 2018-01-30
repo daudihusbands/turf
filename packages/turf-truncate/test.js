@@ -1,42 +1,55 @@
-var test = require('tape');
-var truncate = require('./');
-var path = require('path');
-var load = require('load-json-file');
-var write = require('write-json-file');
+import fs from 'fs';
+import test from 'tape';
+import path from 'path';
+import load from 'load-json-file';
+import write from 'write-json-file';
+import { point } from '@turf/helpers';
+import truncate from './index';
 
-var directories = {
+const directories = {
     in: path.join(__dirname, 'test', 'in') + path.sep,
     out: path.join(__dirname, 'test', 'out') + path.sep
 };
 
-test('truncate', (t) => {
-    var point = load.sync(directories.in + 'point.json');
-    var points = load.sync(directories.in + 'points.json');
-    var pointElevation = load.sync(directories.in + 'pointElevation.json');
-    var polygon = load.sync(directories.in + 'polygon.json');
-    var polygons = load.sync(directories.in + 'polygons.json');
+let fixtures = fs.readdirSync(directories.in).map(filename => {
+    return {
+        filename,
+        name: path.parse(filename).name,
+        geojson: load.sync(directories.in + filename)
+    };
+});
+// fixtures = fixtures.filter(fixture => fixture.name === 'points');
 
-    var pointTruncate = truncate(point);
-    var pointsTruncate = truncate(points);
-    var pointElevationTruncate = truncate(pointElevation, 6, true);
-    var polygonTruncate = truncate(polygon);
-    var polygonsTruncate = truncate(polygons);
-    var polygonsTruncateDecimal3 = truncate(polygons, 3);
+test('turf-truncate', t => {
+    for (const {filename, name, geojson}  of fixtures) {
+        const {precision, coordinates} = geojson.properties || {};
+        const results = truncate(geojson, {
+            precision: precision,
+            coordinates: coordinates
+        });
 
-    if (process.env.REGEN) {
-        write.sync(directories.out + 'pointTruncate.json', pointTruncate);
-        write.sync(directories.out + 'pointsTruncate.json', pointsTruncate);
-        write.sync(directories.out + 'pointElevationTruncate.json', pointElevationTruncate);
-        write.sync(directories.out + 'polygonTruncate.json', polygonTruncate);
-        write.sync(directories.out + 'polygonsTruncate.json', polygonsTruncate);
-        write.sync(directories.out + 'polygonsTruncateDecimal3.json', polygonsTruncateDecimal3);
+        if (process.env.REGEN) write.sync(directories.out + filename, results);
+        t.deepEqual(results, load.sync(directories.out + filename), name);
     }
+    t.end();
+});
 
-    t.deepEqual(pointTruncate, load.sync(directories.out + 'pointTruncate.json'), 'pointTruncate');
-    t.deepEqual(pointsTruncate, load.sync(directories.out + 'pointsTruncate.json'), 'pointsTruncate');
-    t.deepEqual(pointElevationTruncate, load.sync(directories.out + 'pointElevationTruncate.json'), 'pointElevationTruncate');
-    t.deepEqual(polygonTruncate, load.sync(directories.out + 'polygonTruncate.json'), 'polygonTruncate');
-    t.deepEqual(polygonsTruncate, load.sync(directories.out + 'polygonsTruncate.json'), 'polygonsTruncate');
-    t.deepEqual(polygonsTruncateDecimal3, load.sync(directories.out + 'polygonsTruncateDecimal3.json'), 'polygonsTruncateDecimal3');
+test('turf-truncate - precision & coordinates', t => {
+    t.deepEqual(truncate(point([50.1234567, 40.1234567]), {precision: 3}).geometry.coordinates, [50.123, 40.123], 'precision 3');
+    t.deepEqual(truncate(point([50.1234567, 40.1234567]), {precision: 0}).geometry.coordinates, [50, 40], 'precision 0');
+    t.deepEqual(truncate(point([50, 40, 1100]), {precision: 6}).geometry.coordinates, [50, 40, 1100], 'coordinates default to 3');
+    t.deepEqual(truncate(point([50, 40, 1100]), {precision: 6, coordinates: 2}).geometry.coordinates, [50, 40], 'coordinates 2');
+    t.end();
+});
+
+test('turf-truncate - prevent input mutation', t => {
+    const pt = point([120.123, 40.123, 3000]);
+    const ptBefore = JSON.parse(JSON.stringify(pt));
+
+    truncate(pt, {precision: 0});
+    t.deepEqual(ptBefore, pt, 'does not mutate input');
+
+    truncate(pt, {precision: 0, coordinates: 2, mutate: true});
+    t.deepEqual(pt, point([120, 40]), 'does mutate input');
     t.end();
 });
