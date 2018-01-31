@@ -8,6 +8,7 @@ var polygonize = require('@turf/polygonize');
 var featureCollection = helpers.featureCollection;
 var lineString = helpers.lineString;
 
+
 /**
  * Slices {@link Polygon} using a {@link Linestring}.
  *
