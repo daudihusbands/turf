@@ -15,6 +15,7 @@
     "type": "git",
     "url": "https://github.com/turfjs/turf.git"
   },
+  "name": "turf-slice",
   "keywords": [
     "gis",
     "geo",
